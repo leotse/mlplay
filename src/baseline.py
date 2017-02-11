@@ -1,20 +1,10 @@
-# warm up - simple linear regression on price data
-
-# findings: linear regression even with polynomial features performs quite
-# poorly in general; which is expected as it is hard to imagine linear
-# models can successfully model market dynamics; model was able to find
-# signal in some stocks but requires special sets of hyper parameters
-
-# insights: in the final system it's very likely that individual stocks
-# will need their own set of hyper parameters to work well
+# warmup - use random predictor as the baseline performance
 
 import random
 
-from sklearn import linear_model
-from sklearn.preprocessing import PolynomialFeatures
-
 import perf
 from data.loader import Loader
+from models.dumb import RandomPredictor
 
 # stock to train
 ticker = 'FB'
@@ -32,11 +22,6 @@ X, y = loader.n_days_history(ticker,
                              n=n,
                              x_fields=x_fields,
                              y_field=y_field)
-
-# add polynomial features
-poly = PolynomialFeatures(degree=degree)
-poly.fit(X)
-X = poly.transform(X)
 
 # shuffle X and y
 rand_indices = random.sample(list(range(len(X))), len(X))
@@ -56,19 +41,20 @@ y_test = y[i_50p:i_75p]
 X_cv = X[i_75p:]
 y_cv = y[i_75p:]
 
-# fit with ordinary linear reg
-# model = linear_model.LinearRegression(normalize=True)
-model = linear_model.Ridge(normalize=True, alpha=alpha)
+# bogus model fit
+model = RandomPredictor()
 model.fit(X_train, y_train)
 
 # test model performance
 train_perf = perf.simple(model, X_train, y_train)
 test_perf = perf.simple(model, X_test, y_test)
 
-print 'training performance: {0}/{1} = {2:.2f}%'.format(
+print 'dumb model performance'
+
+print 'training: {0}/{1} = {2:.2f}%'.format(
     train_perf, len(X_train),
     float(train_perf) / len(X_train) * 100)
 
-print 'test performance: {0}/{1} = {2:.2f}%'.format(
+print 'test: {0}/{1} = {2:.2f}%'.format(
     test_perf, len(X_test),
     float(test_perf) / len(X_test) * 100)
