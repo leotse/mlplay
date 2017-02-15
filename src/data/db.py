@@ -30,6 +30,22 @@ class DB(object):
         self.conn.commit()
         self.conn.close()
 
+    def select_change(self, ticker, fields=None):
+        """Gets price change data w/ the specified fields for the ticker"""
+
+        if fields is None:
+            fields = ['(adj_close-adj_open) as adj_change']
+        else:
+            fields = fields + ['(adj_close-adj_open) as adj_change']
+
+        statement = '''
+            SELECT {0} FROM prices
+            WHERE ticker=?
+            ORDER BY datetime ASC
+            '''.format(','.join(fields))
+
+        return self.cursor.execute(statement, (ticker,))
+
     def select(self, ticker,
                start_date=arrow.get(0).datetime,
                end_date=arrow.get().datetime):

@@ -22,20 +22,33 @@ class Loader(object):
         """
 
         # get price data for the ticker from db
-        rows = [row for row in self.db.select(ticker)]
+        rows = [row for row in self.db.select_change(ticker, fields=[
+            'adj_open',
+            'adj_close',
+            'adj_volume'
+        ])]
 
-        # calc the adjusted changes
-        adj_changes = [day1['adj_close'] - day0['adj_close']
-                       for [day0, day1] in zip(rows[:-1], rows[1:])]
+        # select only the desired fields from the db rows
+        X = [(row['adj_open'],
+              row['adj_close'],
+              row['adj_volume'],
+              row['adj_change']) for row in rows]
 
-        # build data matrix X
-        X_rows = zip(*[rows[i:] for i in xrange(n)])
-        X = [[day[field] for day in days for field in ['adj_close', 'volume']]
-             for days in X_rows]
+        # combine n days of history into one row
+        X = zip(*[X[i:] for i in xrange(n)])
+
+        # then flatten eachrow
+        def flatten(row):
+            """flattens a row"""
+            return reduce(lambda t1, t2: t1 + t2, row)
+        X = [flatten(row) for row in X]
+
+        # and label vector y that lines up with X
+        y = [row['adj_change'] for row in rows]
 
         # remove latest day from training data X
         # remove the first n days of data from label data y
-        return X[:-1], adj_changes[n - 1:]
+        return X[:-1], y[n:]
 
     def load_price_history(self, ticker, n, x_fields, y_field):
         """
@@ -63,12 +76,6 @@ class Loader(object):
         # removing the final row since the feature matrix
         # should not have knowledge of the latest price
         X = X[:-1]
-
-        # build output vector y
-        # which is the change of the y field
-        # y = []
-        # for item in zip(y_values, y_values[1:]):
-        #     y.append(item[1] - item[0])
 
         # line up with the feature matrix X
         return X, y_values[n:]

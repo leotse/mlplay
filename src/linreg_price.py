@@ -19,14 +19,14 @@ import scoring
 from data.loader import Loader
 
 # stock to train
-TICKER = 'TWTR'
+TICKER = 'FB'
 
 # hyper parameters
 N_DAYS = 50
-DEGREE = 3
+DEGREE = 2
 ALPHA = 0.1
 Y_FIELD = 'adj_close'
-X_FIELDS = ['adj_close', 'adj_volume']
+X_FIELDS = ['adj_open', 'adj_close', 'adj_volume']
 
 # load price data
 loader = Loader('tmp/prices_all.db')
@@ -81,9 +81,9 @@ actual_changes_test = [y_test[i] - X_last_price_test[i]
                        for i in xrange(len(X_test))]
 
 # calc and output model performance
-train_perf = scoring.change_direction(
+train_perf = scoring.by_change_direction(
     predicted_changes_train, actual_changes_train)
-test_perf = scoring.change_direction(
+test_perf = scoring.by_change_direction(
     predicted_changes_test, actual_changes_test)
 
 print 'training performance: {0}/{1} = {2:.2f}%'.format(
