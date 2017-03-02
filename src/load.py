@@ -1,18 +1,15 @@
 """load data for the given ticker and date range"""
 
-import sys
+from data.loader import load, load_history
 
-from data.loader import Loader
-from common.utils import log
+df = load('aapl')
 
-dbpath = sys.argv[1]
+df_change_history = load_history('aapl', 'change', 5)
+change_future = (df['close'].shift(-5) - df['close']) / df['close'] * 100.0
+change_future.name = 'change+5'
 
-log('using db {0}'.format(dbpath))
+dataset = df_change_history.join(change_future).dropna()
+print dataset
 
-loader = Loader(dbpath)
-X, y = loader.load_price_history(ticker='TSLA', n=5,
-                                 x_fields=['adj_volume', 'adj_close'],
-                                 y_field='adj_close')
-
-for i in xrange(0, 5):
-    print '{0} {1}'.format(X[i], y[i])
+y = dataset.pop('change+5')
+X = dataset

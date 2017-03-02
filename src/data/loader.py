@@ -1,10 +1,38 @@
 """
 data loader that provides function to load data with different features (X)
-and output (Y)
+and output (y)
 """
+
+import os
+import pandas as pd
 
 from data.db import DB
 
+def load(ticker):
+    """Load price data for ticker"""
+    rel_path = 'tmp/{0}.csv'.format(ticker.lower())
+    abs_path = os.path.realpath(rel_path)
+    df = pd.read_csv(abs_path, index_col=1, parse_dates=True)
+
+    # add change % series
+    df['change'] = (df['close'] - df['open']) / df['open'] * 100.0
+
+    # ignore rows with missing data
+    return df
+
+def load_history(ticker, field, n):
+    """ load n days field history"""
+    df = load(ticker)
+
+    # build n-days history for the given field
+    def reducer(series, i):
+        """reducer to create the data series dict"""
+        series['{0}-{1}'.format(field, i)] = df[field].shift(i)
+        return series
+    series_dict = reduce(reducer, xrange(0, n), {})
+
+    # create DataFrame and drop NaNs
+    return pd.DataFrame(data=series_dict)
 
 class Loader(object):
     """Loader contains functions to load and format data for model training"""
