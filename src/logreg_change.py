@@ -1,5 +1,8 @@
 """
 warm up #3 - simple logistic regression to predict price change
+
+update #1 - good accuracy but again, probably because i was using
+well known stocks to test, will need more testing
 """
 
 import numpy as np
